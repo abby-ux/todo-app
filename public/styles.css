@@ -1,0 +1,34 @@
+/* Add to your existing CSS */
+
+.due-date-input {
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.due-date {
+    margin-right: 10px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.due-date.overdue {
+    color: #ff4444;
+    font-weight: bold;
+}
+
+.task-item.overdue .task-text {
+    color: #ff4444;
+}
+
+/* Update the add-task section to accommodate the date input */
+.add-task {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.add-task input[type="date"] {
+    width: 150px;
+}
