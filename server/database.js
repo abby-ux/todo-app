@@ -1,5 +1,7 @@
+// server/database.js
 const sqlite3 = require('sqlite3').verbose();
 
+// Create a new database connection
 const db = new sqlite3.Database('tasks.db', (err) => {
     if (err) {
         console.error('Error connecting to database:', err);
@@ -9,13 +11,13 @@ const db = new sqlite3.Database('tasks.db', (err) => {
     }
 });
 
+// Create tasks table if it doesn't exist
 function createTable() {
     const sql = `
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             text TEXT NOT NULL,
-            completed BOOLEAN DEFAULT 0,
-            due_date TEXT
+            completed BOOLEAN DEFAULT 0
         )
     `;
     

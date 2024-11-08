@@ -1,13 +1,13 @@
+// public/script.js
 let tasks = [];
 let currentFilter = 'all';
 
+// Fetch all tasks when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     fetchTasks();
-    // Set minimum date to today for the due date input
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('dueDateInput').min = today;
 });
 
+// Fetch tasks from the backend
 async function fetchTasks() {
     try {
         const response = await fetch('http://localhost:3000/api/tasks');
@@ -18,11 +18,10 @@ async function fetchTasks() {
     }
 }
 
+// Add a new task
 async function addTask() {
     const input = document.getElementById('taskInput');
-    const dueDateInput = document.getElementById('dueDateInput');
     const text = input.value.trim();
-    const due_date = dueDateInput.value;
     
     if (text) {
         try {
@@ -31,20 +30,20 @@ async function addTask() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ text, completed: false, due_date }),
+                body: JSON.stringify({ text, completed: false }),
             });
             
             const newTask = await response.json();
             tasks.push(newTask);
             renderTasks();
             input.value = '';
-            dueDateInput.value = '';
         } catch (error) {
             console.error('Error adding task:', error);
         }
     }
 }
 
+// Toggle task completion status
 async function toggleTask(id) {
     const task = tasks.find(t => t.id === id);
     if (task) {
@@ -54,10 +53,7 @@ async function toggleTask(id) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    completed: !task.completed,
-                    due_date: task.due_date 
-                }),
+                body: JSON.stringify({ completed: !task.completed }),
             });
             
             task.completed = !task.completed;
@@ -68,29 +64,7 @@ async function toggleTask(id) {
     }
 }
 
-async function updateDueDate(id, newDate) {
-    const task = tasks.find(t => t.id === id);
-    if (task) {
-        try {
-            await fetch(`http://localhost:3000/api/tasks/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    completed: task.completed,
-                    due_date: newDate 
-                }),
-            });
-            
-            task.due_date = newDate;
-            renderTasks();
-        } catch (error) {
-            console.error('Error updating due date:', error);
-        }
-    }
-}
-
+// Delete a task
 async function deleteTask(id) {
     try {
         await fetch(`http://localhost:3000/api/tasks/${id}`, {
@@ -104,10 +78,12 @@ async function deleteTask(id) {
     }
 }
 
+// Filter tasks
 function filterTasks(filter) {
     currentFilter = filter;
     renderTasks();
     
+    // Update active filter button
     document.querySelectorAll('.filters button').forEach(btn => {
         btn.classList.remove('active');
         if (btn.textContent.toLowerCase() === filter) {
@@ -116,24 +92,7 @@ function filterTasks(filter) {
     });
 }
 
-function isOverdue(dueDate) {
-    if (!dueDate) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const taskDate = new Date(dueDate);
-    return taskDate < today;
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'No due date';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-    });
-}
-
+// Render tasks based on current filter
 function renderTasks() {
     const taskList = document.getElementById('taskList');
     taskList.innerHTML = '';
@@ -141,45 +100,21 @@ function renderTasks() {
     const filteredTasks = tasks.filter(task => {
         if (currentFilter === 'active') return !task.completed;
         if (currentFilter === 'completed') return task.completed;
-        if (currentFilter === 'overdue') return !task.completed && isOverdue(task.due_date);
         return true;
-    });
-    
-    // Sort tasks by due date
-    filteredTasks.sort((a, b) => {
-        if (!a.due_date) return 1;
-        if (!b.due_date) return -1;
-        return new Date(a.due_date) - new Date(b.due_date);
     });
     
     filteredTasks.forEach(task => {
         const li = document.createElement('li');
-        li.className = `task-item ${task.completed ? 'completed' : ''} ${
-            !task.completed && isOverdue(task.due_date) ? 'overdue' : ''
-        }`;
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
         
         li.innerHTML = `
             <input type="checkbox" 
                    ${task.completed ? 'checked' : ''} 
                    onchange="toggleTask(${task.id})">
             <span class="task-text">${task.text}</span>
-            <input type="date" 
-                   value="${task.due_date || ''}"
-                   onchange="updateDueDate(${task.id}, this.value)"
-                   class="due-date-input">
-            <span class="due-date ${isOverdue(task.due_date) ? 'overdue' : ''}">
-                ${formatDate(task.due_date)}
-            </span>
             <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
         `;
         
         taskList.appendChild(li);
     });
 }
-
-// Add keyboard shortcut for adding tasks
-document.getElementById('taskInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        addTask();
-    }
-});

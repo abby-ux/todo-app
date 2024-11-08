@@ -1,3 +1,4 @@
+// server/server.js
 const express = require('express');
 const cors = require('cors');
 const db = require('./database');
@@ -5,13 +6,14 @@ const db = require('./database');
 const app = express();
 const port = 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
 // Get all tasks
 app.get('/api/tasks', (req, res) => {
-    const sql = 'SELECT * FROM tasks ORDER BY due_date ASC';
+    const sql = 'SELECT * FROM tasks';
     db.all(sql, [], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
@@ -23,10 +25,9 @@ app.get('/api/tasks', (req, res) => {
 
 // Add a new task
 app.post('/api/tasks', (req, res) => {
-    const { text, completed, due_date } = req.body;
-    const sql = 'INSERT INTO tasks (text, completed, due_date) VALUES (?, ?, ?)';
-    
-    db.run(sql, [text, completed ? 1 : 0, due_date], function(err) {
+    const { text, completed } = req.body;
+    const sql = 'INSERT INTO tasks (text, completed) VALUES (?, ?)';
+    db.run(sql, [text, completed ? 1 : 0], function(err) {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
@@ -34,23 +35,21 @@ app.post('/api/tasks', (req, res) => {
         res.json({
             id: this.lastID,
             text,
-            completed,
-            due_date
+            completed
         });
     });
 });
 
 // Update a task
 app.put('/api/tasks/:id', (req, res) => {
-    const { completed, due_date } = req.body;
-    const sql = 'UPDATE tasks SET completed = ?, due_date = ? WHERE id = ?';
-    
-    db.run(sql, [completed ? 1 : 0, due_date, req.params.id], (err) => {
+    const { completed } = req.body;
+    const sql = 'UPDATE tasks SET completed = ? WHERE id = ?';
+    db.run(sql, [completed ? 1 : 0, req.params.id], (err) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
         }
-        res.json({ id: req.params.id, completed, due_date });
+        res.json({ id: req.params.id, completed });
     });
 });
 
