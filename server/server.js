@@ -1,29 +1,31 @@
 // server/server.js
-const express = require('express');
-const cors = require('cors');
-const db = require('./database');
+const express = require('express'); // import express library, web framework for Node.js
+const cors = require('cors'); // allows web browser to make requests to server (from frontend or other ports)
+const db = require('./database'); // database connection
 
-const app = express();
-const port = 3000;
+const app = express(); // create the application
+const port = 3000; // server runs on port 3000
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+app.use(cors()); // allows requests from frontend to backend
+app.use(express.json()); // parse JSON data from requests
+app.use(express.static('public')); // serve frontend files from the 'public' folder
 
-// Get all tasks
+// Get all tasks, GET route
+// get all the tasks from the task table in the database 
 app.get('/api/tasks', (req, res) => {
-    const sql = 'SELECT * FROM tasks';
-    db.all(sql, [], (err, rows) => {
+    const sql = 'SELECT * FROM tasks'; // select all rows 
+    db.all(sql, [], (err, rows) => { // execute the sql query
         if (err) {
             res.status(500).json({ error: err.message });
             return;
         }
-        res.json(rows);
+        res.json(rows); // send back the rows in a json response
     });
 });
 
 // Add a new task
+// define a POST route to api/tasks
 app.post('/api/tasks', (req, res) => {
     const { text, completed } = req.body;
     const sql = 'INSERT INTO tasks (text, completed) VALUES (?, ?)';
